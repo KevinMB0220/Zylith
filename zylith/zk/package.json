@@ -1,0 +1,17 @@
+{
+  "name": "zylith-circuits",
+  "version": "1.0.0",
+  "description": "Circom circuits for Zylith ZK privacy",
+  "scripts": {
+    "compile": "mkdir -p build/membership build/swap build/withdraw && circom circuits/membership.circom --r1cs --wasm --sym -l node_modules -o build/membership && circom circuits/swap.circom --r1cs --wasm --sym -l node_modules -o build/swap && circom circuits/withdraw.circom --r1cs --wasm --sym -l node_modules -o build/withdraw",
+    "setup": "mkdir -p pot && snarkjs powersoftau new bn128 16 pot/pot16_0000.ptau -v && snarkjs powersoftau contribute pot/pot16_0000.ptau pot/pot16_0001.ptau --name=\"First contribution\" -v && snarkjs powersoftau prepare phase2 pot/pot16_0001.ptau pot/pot16_final.ptau -v",
+    "generate-keys": "mkdir -p zkeys && snarkjs groth16 setup build/membership/membership.r1cs pot/pot16_final.ptau zkeys/membership.zkey && snarkjs groth16 setup build/swap/swap.r1cs pot/pot16_final.ptau zkeys/swap.zkey && snarkjs groth16 setup build/withdraw/withdraw.r1cs pot/pot16_final.ptau zkeys/withdraw.zkey",
+    "export-vk": "mkdir -p vkeys && snarkjs zkey export verificationkey zkeys/membership.zkey vkeys/membership_vk.json && snarkjs zkey export verificationkey zkeys/swap.zkey vkeys/swap_vk.json && snarkjs zkey export verificationkey zkeys/withdraw.zkey vkeys/withdraw_vk.json",
+    "generate-garaga": "garaga gen groth16 membership_vk.json --output ../src/privacy/verifier_membership.cairo && garaga gen groth16 swap_vk.json --output ../src/privacy/verifier_swap.cairo && garaga gen groth16 withdraw_vk.json --output ../src/privacy/verifier_withdraw.cairo"
+  },
+  "dependencies": {
+    "circomlib": "^2.0.5",
+    "garaga": "^1.0.1",
+    "snarkjs": "^0.7.0"
+  }
+}
