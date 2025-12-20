@@ -51,14 +51,14 @@ jobs:
         run: scarb build
 
       - name: Run CLMM tests
-        run: snforge test test_clmm --detailed
+        run: snforge test test_clmm
         continue-on-error: true
 
       - name: Run Privacy layer tests
-        run: snforge test test_privacy --detailed
+        run: snforge test test_privacy
 
       - name: Run Integration tests
-        run: snforge test test_integration --detailed
+        run: snforge test test_integration
         continue-on-error: true
 
       - name: Run all tests (full suite)
