@@ -28,6 +28,15 @@ Phase 2 has been completed with:
 - [x] All circuits tested with sample data
 - [x] Documentation updated
 
+## Phase 3: LP Circuits ✅
+
+Phase 3 has been completed with:
+- [x] LP mint circuit implemented
+- [x] LP burn circuit implemented
+- [x] CLMM math constraints documented (TODO markers for production)
+- [x] All circuits tested successfully
+- [x] Documentation updated
+
 ## Directory Structure
 
 ```
@@ -46,6 +55,16 @@ circuits-noir/
 ├── withdraw/           # Private withdrawal circuit (Phase 2 ✅)
 │   ├── src/
 │   │   └── main.nr     # Withdrawal proof implementation
+│   ├── Nargo.toml
+│   └── Prover.toml
+├── lp_mint/            # LP position creation circuit (Phase 3 ✅)
+│   ├── src/
+│   │   └── main.nr     # LP mint proof implementation
+│   ├── Nargo.toml
+│   └── Prover.toml
+├── lp_burn/            # LP position removal circuit (Phase 3 ✅)
+│   ├── src/
+│   │   └── main.nr     # LP burn proof implementation
 │   ├── Nargo.toml
 │   └── Prover.toml
 ├── compute_values/     # Helper circuit for computing test values
@@ -299,14 +318,135 @@ The nullifier prevents double-spending:
 - Tracked on-chain to prevent reuse
 - Links secret to spent commitment without revealing it
 
-## Next Steps (Phase 3+)
+## LP Mint Circuit (Phase 3)
 
-- [ ] Implement LP mint circuit (Phase 3)
-- [ ] Implement LP burn circuit (Phase 3)
-- [ ] Complete full CLMM math in swap circuit (Phase 3)
-- [ ] Research PLONK verification on Starknet (Phase 4)
-- [ ] Integrate with Cairo contracts (Phase 4)
-- [ ] Performance benchmarking (Phase 5)
+The LP mint circuit proves the creation of a liquidity position in the CLMM.
+
+### Circuit Logic
+
+1. **Input Commitment Membership**: Verifies tokens being added exist in Merkle tree
+2. **Old Commitment Verification**: Confirms input commitment structure
+3. **New Commitment Construction**: Creates LP position commitment
+4. **Tick Validation**: Ensures tick parameters are valid and properly spaced
+5. **Liquidity Calculation**: Validates liquidity amounts (simplified in MVP)
+
+### Inputs
+
+**Public Inputs**:
+- `merkle_root`: Merkle tree root (Field)
+- `old_commitment`: Input tokens commitment (Field)
+- `new_commitment`: LP position commitment (Field)
+- `tick_lower`, `tick_upper`: Position range (i32, must be divisible by TICK_SPACING=60)
+- `liquidity_delta`: Liquidity being added (u128)
+- `sqrt_price_current`: Current pool price in Q96 format (u128)
+
+**Private Inputs**:
+- `secret_in`, `nullifier_in`: Input commitment secrets
+- `amount0`, `amount1`: Token amounts being deposited (u128)
+- `secret_out`, `nullifier_out`: Position commitment secrets
+- `path_elements`, `path_indices`: Merkle proof [Field; 20]
+
+### Tick Constraints
+
+- MIN_TICK = -887272, MAX_TICK = 887272
+- TICK_SPACING = 60 (both ticks must be divisible)
+- tick_lower < tick_upper
+- Valid for concentrated liquidity ranges
+
+### TODO: Full Liquidity Math
+
+For production, implement precise calculations:
+- Convert ticks to sqrt_price values
+- Calculate liquidity from amounts using Q96 arithmetic
+- Handle single-sided vs two-sided provision based on current price
+- Match Cairo's `get_liquidity_for_amounts` function
+
+## LP Burn Circuit (Phase 3)
+
+The LP burn circuit proves removal of liquidity from a position.
+
+### Circuit Logic
+
+1. **Input Commitment Membership**: Verifies LP position exists in Merkle tree
+2. **Old Commitment Verification**: Confirms position structure
+3. **New Commitment Construction**: Creates tokens received commitment
+4. **Tick Validation**: Same constraints as LP mint
+5. **Liquidity Validation**: Ensures not removing more than position has
+6. **Protocol Fee Accounting**: Validates fee deduction (TODO)
+
+### Inputs
+
+**Public Inputs**:
+- `merkle_root`: Merkle tree root (Field)
+- `old_commitment`: LP position commitment (Field)
+- `new_commitment`: Tokens received commitment (Field)
+- `tick_lower`, `tick_upper`: Position range (i32)
+- `liquidity_delta`: Liquidity being removed (u128)
+- `sqrt_price_current`: Current pool price (u128)
+
+**Private Inputs**:
+- `secret_in`, `nullifier_in`: Position commitment secrets
+- `position_liquidity`: Total liquidity in position (u128)
+- `secret_out`, `nullifier_out`: Output commitment secrets
+- `amount0`, `amount1`: Token amounts received (u128)
+- `path_elements`, `path_indices`: Merkle proof [Field; 20]
+
+### TODO: Protocol Fees & Amounts
+
+For production:
+- Implement protocol fee calculation (withdrawal fee model per Ekubo)
+- Calculate exact amounts from liquidity and tick range
+- Use Q96 fixed-point arithmetic
+- Match Cairo's `get_amounts_for_liquidity` function
+
+## CLMM Math Implementation Status
+
+All circuits include TODO markers for full CLMM math implementation:
+
+### Required for Production
+
+**Q96 Fixed-Point Arithmetic**:
+- Implement sqrt_price conversions
+- Safe multiplication/division with overflow protection
+- Match Ekubo's precision model
+
+**Tick-Price Conversion**:
+- `sqrt_ratio = 1.0001^(tick/2)` in Q96 format
+- Inverse conversion for validation
+
+**Liquidity Calculations**:
+- `get_liquidity_for_amounts(amount0, amount1, sqrt_price, tick_lower, tick_upper)`
+- `get_amounts_for_liquidity(liquidity, sqrt_price, tick_lower, tick_upper)`
+- Handle edge cases (single-sided provision, narrow ranges)
+
+**Price Impact Validation** (Swap):
+- Constant product formula verification
+- Fee calculation (configurable basis points)
+- Slippage bounds checking
+
+**Position Math** (LP circuits):
+- Fee growth accumulator calculations
+- Protocol fee deductions
+- Position value computations
+
+### Current Implementation
+
+All circuits have **simplified checks** that validate:
+- Direction constraints (price movements, tick ordering)
+- Basic conservation (amounts, liquidity bounds)
+- Sanity checks (positive values, reasonable ranges)
+
+This is sufficient for Phase 3 MVP but **not production-ready**.
+
+## Next Steps (Phase 4+)
+
+- [ ] Research PLONK/UltraHonk verification on Starknet (Phase 4)
+- [ ] Investigate Garaga integration for PLONK verifier (Phase 4)
+- [ ] Implement verifier contract in Cairo (Phase 4)
+- [ ] Test end-to-end proof verification on Starknet (Phase 4)
+- [ ] Implement full CLMM math in all circuits (Post-MVP)
+- [ ] Performance benchmarking and gas cost analysis (Phase 5)
+- [ ] Comparison with Circom/Groth16 approach (Phase 5)
 
 ## Troubleshooting
 
