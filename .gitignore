@@ -69,3 +69,6 @@ out/
 
 /.venv-garaga/
 activate-garaga.sh
+
+# ASP state files
+asp/asp_state.json
