@@ -21,12 +21,15 @@ interface ProofProgressProps {
   onCancel?: () => void
 }
 
-const DEFAULT_STEPS: { id: ProofStep; label: string }[] = [
-  { id: "fetching_merkle", label: "Fetching Merkle Proof" },
-  { id: "generating_witness", label: "Generating Witness" },
-  { id: "computing_proof", label: "Computing Zero-Knowledge Proof" },
-  { id: "formatting", label: "Formatting for Verifier" },
+const DEFAULT_STEPS: { id: ProofStep; label: string; estimatedTime?: number }[] = [
+  { id: "fetching_merkle", label: "Fetching Merkle Proof", estimatedTime: 1 },
+  { id: "generating_witness", label: "Generating Witness", estimatedTime: 2 },
+  { id: "computing_proof", label: "Computing Zero-Knowledge Proof", estimatedTime: 10 },
+  { id: "formatting", label: "Formatting for Verifier", estimatedTime: 1 },
 ]
+
+// Estimated total time in seconds
+const ESTIMATED_TOTAL_TIME = DEFAULT_STEPS.reduce((sum, step) => sum + (step.estimatedTime || 0), 0)
 
 export function ProofProgress({ 
   currentStep, 
@@ -37,11 +40,25 @@ export function ProofProgress({
   const currentStepIndex = steps.findIndex(s => s.id === currentStep)
   const isComplete = currentStep === "complete" || currentStep === "verifying"
   const isError = currentStep === "error"
+  
+  // Calculate estimated remaining time
+  const completedSteps = currentStepIndex >= 0 ? currentStepIndex : 0
+  const remainingSteps = steps.length - completedSteps
+  const estimatedRemaining = steps
+    .slice(completedSteps)
+    .reduce((sum, step) => sum + (step.estimatedTime || 0), 0)
 
   return (
     <div className="w-full space-y-4 p-4 rounded-lg bg-stark-darker/50 border border-stark-blue/10">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-white">Generating Private Proof</h3>
+        <div>
+          <h3 className="text-sm font-medium text-white">Generating Private Proof</h3>
+          {!isComplete && !isError && estimatedRemaining > 0 && (
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Estimated time: ~{estimatedRemaining}s
+            </p>
+          )}
+        </div>
         {onCancel && !isComplete && !isError && (
           <Button 
             variant="ghost" 
