@@ -16,9 +16,11 @@ interface Position {
 
 interface PositionCardProps {
   position: Position
+  onCollectFees?: () => void
+  onRemove?: () => void
 }
 
-export function PositionCard({ position }: PositionCardProps) {
+export function PositionCard({ position, onCollectFees, onRemove }: PositionCardProps) {
   return (
     <Card className="bg-stark-dark border-stark-gray/10 hover:border-stark-blue/30 transition-colors">
       <CardHeader className="flex flex-row items-center justify-between pb-3">
@@ -49,10 +51,22 @@ export function PositionCard({ position }: PositionCardProps) {
           </div>
         </div>
         <div className="flex gap-2 pt-2">
-          <Button variant="outline" size="sm" className="flex-1">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex-1"
+            onClick={onCollectFees}
+            disabled={!onCollectFees}
+          >
             Collect Fees
           </Button>
-          <Button variant="outline" size="sm" className="flex-1">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex-1"
+            onClick={onRemove}
+            disabled={!onRemove}
+          >
             Remove
           </Button>
         </div>
