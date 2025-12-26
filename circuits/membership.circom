@@ -19,18 +19,18 @@ template Membership(depth) {
     signal input pathElements[depth];
     signal input pathIndices[depth];
     
-    // Verify commitment generation: Mask(Hash(Mask(Hash(secret, nullifier)), amount))
+    // Verify commitment generation: Mask(Poseidon(Poseidon(secret, nullifier), amount))
+    // NOTE: Cairo contract does NOT mask intermediate - matches zylith/src/privacy/commitment.cairo
     component poseidon1 = Poseidon(2);
     poseidon1.inputs[0] <== secret;
     poseidon1.inputs[1] <== nullifier;
 
-    component mask1 = Mask250();
-    mask1.in <== poseidon1.out;
-    
+    // NO intermediate mask - Cairo contract uses full u384 value directly
     component poseidon2 = Poseidon(2);
-    poseidon2.inputs[0] <== mask1.out;
+    poseidon2.inputs[0] <== poseidon1.out;
     poseidon2.inputs[1] <== amount;
 
+    // Only mask the final result
     component mask2 = Mask250();
     mask2.in <== poseidon2.out;
     

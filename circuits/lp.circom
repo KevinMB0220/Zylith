@@ -43,19 +43,19 @@ template LPOperation(depth) {
     
     // ============================================
     // STEP 1: Verify input commitment structure
-    // commitment = Mask(Hash(Mask(Hash(secret, nullifier)), amount))
+    // commitment = Mask(Poseidon(Poseidon(secret, nullifier), amount))
+    // NOTE: Cairo contract does NOT mask intermediate - matches zylith/src/privacy/commitment.cairo
     // ============================================
     component poseidon1 = Poseidon(2);
     poseidon1.inputs[0] <== secret_in;
     poseidon1.inputs[1] <== nullifier;
 
-    component mask1 = Mask250();
-    mask1.in <== poseidon1.out;
-    
+    // NO intermediate mask - Cairo contract uses full u384 value directly
     component poseidon2 = Poseidon(2);
-    poseidon2.inputs[0] <== mask1.out;
+    poseidon2.inputs[0] <== poseidon1.out;
     poseidon2.inputs[1] <== amount_in;
 
+    // Only mask the final result
     component mask2 = Mask250();
     mask2.in <== poseidon2.out;
     signal commitment_in;
@@ -97,18 +97,18 @@ template LPOperation(depth) {
     
     // ============================================
     // STEP 5: Verify output commitment (change note)
+    // NOTE: Cairo contract does NOT mask intermediate
     // ============================================
     component poseidon3 = Poseidon(2);
     poseidon3.inputs[0] <== secret_out;
     poseidon3.inputs[1] <== nullifier_out;
 
-    component mask3 = Mask250();
-    mask3.in <== poseidon3.out;
-    
+    // NO intermediate mask - Cairo contract uses full u384 value directly
     component poseidon4 = Poseidon(2);
-    poseidon4.inputs[0] <== mask3.out;
+    poseidon4.inputs[0] <== poseidon3.out;
     poseidon4.inputs[1] <== amount_out;
 
+    // Only mask the final result
     component mask4 = Mask250();
     mask4.in <== poseidon4.out;
     

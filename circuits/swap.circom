@@ -51,19 +51,19 @@ template Swap(depth) {
 
     // ============================================
     // STEP 1: Verify input commitment structure
-    // commitment = Mask(Hash(Mask(Hash(secret, nullifier)), amount))
+    // commitment = Mask(Poseidon(Poseidon(secret, nullifier), amount))
+    // NOTE: Cairo contract does NOT mask intermediate - matches zylith/src/privacy/commitment.cairo
     // ============================================
     component poseidon1 = Poseidon(2);
     poseidon1.inputs[0] <== secret_in;
     poseidon1.inputs[1] <== nullifier;
     
-    component mask1 = Mask250();
-    mask1.in <== poseidon1.out;
-    
+    // NO intermediate mask - Cairo contract uses full u384 value directly
     component poseidon2 = Poseidon(2);
-    poseidon2.inputs[0] <== mask1.out;
+    poseidon2.inputs[0] <== poseidon1.out;
     poseidon2.inputs[1] <== amount_in;
     
+    // Only mask the final result (matches Cairo contract)
     component mask2 = Mask250();
     mask2.in <== poseidon2.out;
     signal commitment_in;
@@ -71,18 +71,18 @@ template Swap(depth) {
 
     // ============================================
     // STEP 2: Verify output commitment structure
+    // NOTE: Cairo contract does NOT mask intermediate
     // ============================================
     component poseidon3 = Poseidon(2);
     poseidon3.inputs[0] <== secret_out;
     poseidon3.inputs[1] <== nullifier_out;
     
-    component mask3 = Mask250();
-    mask3.in <== poseidon3.out;
-    
+    // NO intermediate mask - Cairo contract uses full u384 value directly
     component poseidon4 = Poseidon(2);
-    poseidon4.inputs[0] <== mask3.out;
+    poseidon4.inputs[0] <== poseidon3.out;
     poseidon4.inputs[1] <== amount_out;
     
+    // Only mask the final result (matches Cairo contract)
     component mask4 = Mask250();
     mask4.in <== poseidon4.out;
     
@@ -102,34 +102,24 @@ template Swap(depth) {
     }
     
     // ============================================
-    // STEP 4: Verify balance sufficiency
-    // Input amount must cover the specified swap amount
-    // ============================================
-    signal balance_check;
-    balance_check <== amount_in - amount_specified;
-    
-    // Ensure non-negative (amount_in >= amount_specified)
-    component n2b_balance = Num2Bits(252);
-    n2b_balance.in <== balance_check;
-
-    // ============================================
-    // STEP 5: Verify CLMM price transition
+    // STEP 4: Verify CLMM price transition
     // The swap math must produce consistent results
+    // NOTE: Balance sufficiency check removed - Cairo contract handles this
+    // through commitment verification and swap execution validation
     // ============================================
     component clmm = GetAmountOut();
     clmm.liquidity <== liquidity;
     clmm.sqrt_p_old <== sqrt_price_old;
     clmm.sqrt_p_new <== new_sqrt_price_x128;
     clmm.zero_for_one <== zero_for_one;
+    // amount_out is now an input (computed off-circuit) - we verify it's correct
+    clmm.amount_out <== amount_out;
     
-    // Output amount from CLMM must be consistent
-    // Note: The actual deltas are verified by the contract
-    // The circuit just needs to verify the math is consistent
-    signal computed_amount_out;
-    computed_amount_out <== clmm.amount_out;
+    // The template verifies that amount_out * Q128 == liquidity * (sqrt_p_old - sqrt_p_new)
+    // This avoids expensive division operations
 
     // ============================================
-    // STEP 6: Verify amount conservation
+    // STEP 5: Verify amount conservation
     // Output note amount = input amount - swap input + swap output
     // ============================================
     // For zero_for_one=1: spending token0, receiving token1

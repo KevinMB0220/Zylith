@@ -31,19 +31,31 @@ template SqrtPriceTransition() {
     // Note: This requires sqrt_p_new to be computed off-circuit and provided as hint
 }
 
-// Simplified amount calculation
+// Optimized amount calculation - avoids expensive division
+// Instead of dividing by Q128, we verify: amount_out * Q128 == liquidity * diff
+// This is much more efficient as it only requires multiplication and equality check
+// amount_out must be computed off-circuit and provided as input
 template GetAmountOut() {
     signal input liquidity;
     signal input sqrt_p_old;
     signal input sqrt_p_new;
     signal input zero_for_one;
-    signal output amount_out;
-
+    signal input amount_out; // Changed from output to input - computed off-circuit
+    
     var Q128 = 2**128;
 
     // zero_for_one: amount_out = L * (sqrt_p_old - sqrt_p_new) / 2^128
     signal diff;
     diff <== sqrt_p_old - sqrt_p_new;
     
-    amount_out <== (liquidity * diff) / Q128; // Simplified division
+    // Calculate numerator: liquidity * diff
+    signal numerator;
+    numerator <== liquidity * diff;
+    
+    // Verify: amount_out * Q128 == numerator
+    // This avoids the expensive division operation
+    // amount_out is provided as input (computed off-circuit) and we just verify it
+    signal check;
+    check <== amount_out * Q128;
+    check === numerator;
 }
