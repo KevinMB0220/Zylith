@@ -18,7 +18,7 @@ cd asp
 
 # Configurar variables de entorno
 export RPC_URL="https://api.cartridge.gg/x/starknet/sepolia"
-export CONTRACT_ADDRESS="0x002c6ced7ef107e71fb10b6b04b301d52116ab1803b19a0b88b35874d207db1d"
+export CONTRACT_ADDRESS="0x07fd7386f3b91ec5e130aafb85da7fe3cbfa069beb080789150c4b75efc5c9ef"
 export PORT="3000"
 
 # Compilar (primera vez)
@@ -32,17 +32,17 @@ cargo run --release
 
 ### Variables de Entorno
 
-| Variable | Descripción | Valor por Defecto |
-|----------|-------------|-------------------|
-| `RPC_URL` | URL del RPC de Starknet | `http://localhost:5050` |
-| `CONTRACT_ADDRESS` | Dirección del contrato Zylith | - |
-| `PORT` | Puerto del servidor API | `3000` |
+| Variable           | Descripción                   | Valor por Defecto       |
+| ------------------ | ----------------------------- | ----------------------- |
+| `RPC_URL`          | URL del RPC de Starknet       | `http://localhost:5050` |
+| `CONTRACT_ADDRESS` | Dirección del contrato Zylith | -                       |
+| `PORT`             | Puerto del servidor API       | `3000`                  |
 
 ### Valores para Sepolia
 
 ```bash
 export RPC_URL="https://api.cartridge.gg/x/starknet/sepolia"
-export CONTRACT_ADDRESS="0x002c6ced7ef107e71fb10b6b04b301d52116ab1803b19a0b88b35874d207db1d"
+export CONTRACT_ADDRESS="0x07fd7386f3b91ec5e130aafb85da7fe3cbfa069beb080789150c4b75efc5c9ef"
 export PORT="3000"
 ```
 
@@ -55,6 +55,7 @@ curl http://localhost:3000/health
 ```
 
 **Respuesta:**
+
 ```json
 {
   "status": "ok",
@@ -69,6 +70,7 @@ curl http://localhost:3000/deposit/proof/0
 ```
 
 **Respuesta:**
+
 ```json
 {
   "leaf": "0x1234...",
@@ -85,6 +87,7 @@ curl http://localhost:3000/deposit/root
 ```
 
 **Respuesta:**
+
 ```json
 "0x5678..."
 ```
@@ -96,6 +99,7 @@ curl http://localhost:3000/deposit/info
 ```
 
 **Respuesta:**
+
 ```json
 {
   "root": "0x5678...",
@@ -160,6 +164,7 @@ Processed 1 deposit events
 ### El servidor no inicia
 
 **Problema:** Error de compilación
+
 ```bash
 # Solución: Compilar primero
 cargo build --release
@@ -168,6 +173,7 @@ cargo build --release
 ### No sincroniza eventos
 
 **Problema:** No detecta eventos Deposit
+
 ```bash
 # Verificar:
 # 1. RPC_URL es correcto
@@ -183,6 +189,7 @@ echo $CONTRACT_ADDRESS
 ### Root no coincide
 
 **Problema:** Root del ASP no coincide con on-chain
+
 ```bash
 # Solución: Resincronizar desde el inicio
 # 1. Detener el servidor
@@ -196,6 +203,7 @@ rm asp_state.json
 ### Puerto ya en uso
 
 **Problema:** Puerto 3000 ocupado
+
 ```bash
 # Solución: Usar otro puerto
 export PORT="3001"
@@ -222,7 +230,7 @@ Compara el `leaf_count` del ASP con el número de eventos Deposit en el contrato
 
 ```typescript
 // Ejemplo de uso desde frontend
-const ASP_URL = 'http://localhost:3000';
+const ASP_URL = "http://localhost:3000";
 
 // Obtener Merkle proof
 async function getMerkleProof(leafIndex: number) {
@@ -258,4 +266,3 @@ Para producción:
 ---
 
 **Última actualización:** Enero 2025
-

@@ -179,7 +179,8 @@ pub mod Zylith {
             new_commitment: felt252,
         ) -> (i128, i128) {
             // Step 1 - Verify ZK proof using Garaga verifier
-            // Garaga verifier expects full_proof_with_hints = [proof (8 elements) + public_inputs (9 elements)]
+            // Garaga verifier expects full_proof_with_hints = [proof (8 elements) + public_inputs
+            // (9 elements)]
             let mut full_proof_with_hints = proof;
             let mut i = 0;
             let public_inputs_len = public_inputs.len();
@@ -187,7 +188,7 @@ pub mod Zylith {
                 full_proof_with_hints.append(*public_inputs.at(i));
                 i += 1;
             }
-            
+
             let swap_verifier_addr = self.swap_verifier.read();
             let verifier = ISwapVerifier { contract_address: swap_verifier_addr };
             let result = verifier.verify_groth16_proof_bn254(full_proof_with_hints.span());
@@ -230,7 +231,8 @@ pub mod Zylith {
             // Negative i128 values are sent as u256: 2^128 - |value|
             // If value >= 2^127, it represents a negative number in two's complement
             let amount0_delta_u256 = *_verified_inputs.at(5);
-            let expected_amount0_delta: i128 = if amount0_delta_u256.low >= 170141183460469231731687303715884105728 { // 2^127
+            let expected_amount0_delta: i128 = if amount0_delta_u256
+                .low >= 170141183460469231731687303715884105728 { // 2^127
                 // Negative value in two's complement: 2^128 - value
                 let two_to_128: u256 = 340282366920938463463374607431768211456; // 2^128
                 let value_u256: u256 = amount0_delta_u256.low.into();
@@ -240,9 +242,10 @@ pub mod Zylith {
             } else {
                 amount0_delta_u256.low.try_into().unwrap()
             };
-            
+
             let amount1_delta_u256 = *_verified_inputs.at(6);
-            let expected_amount1_delta: i128 = if amount1_delta_u256.low >= 170141183460469231731687303715884105728 { // 2^127
+            let expected_amount1_delta: i128 = if amount1_delta_u256
+                .low >= 170141183460469231731687303715884105728 { // 2^127
                 // Negative value in two's complement: 2^128 - value
                 let two_to_128: u256 = 340282366920938463463374607431768211456; // 2^128
                 let value_u256: u256 = amount1_delta_u256.low.into();
@@ -252,7 +255,7 @@ pub mod Zylith {
             } else {
                 amount1_delta_u256.low.try_into().unwrap()
             };
-            
+
             let expected_new_sqrt_price: u256 = *_verified_inputs.at(7);
             // Convert u256 to i32 safely (handles two's complement for negative values)
             // Negative i32 values are sent as u256: 2^32 - |value|
@@ -337,7 +340,7 @@ pub mod Zylith {
                 full_proof_with_hints.append(*public_inputs.at(i));
                 i += 1;
             }
-            
+
             let withdraw_verifier_addr = self.withdraw_verifier.read();
             let verifier = IWithdrawVerifier { contract_address: withdraw_verifier_addr };
             let result = verifier.verify_groth16_proof_bn254(full_proof_with_hints.span());
@@ -433,7 +436,7 @@ pub mod Zylith {
                 full_proof_with_hints.append(*public_inputs.at(i));
                 i += 1;
             }
-            
+
             let lp_verifier_addr = self.lp_verifier.read();
             let verifier = ILPVerifier { contract_address: lp_verifier_addr };
             let result = verifier.verify_groth16_proof_bn254(full_proof_with_hints.span());
@@ -606,7 +609,7 @@ pub mod Zylith {
                 full_proof_with_hints.append(*public_inputs.at(i));
                 i += 1;
             }
-            
+
             let lp_verifier_addr = self.lp_verifier.read();
             let verifier = ILPVerifier { contract_address: lp_verifier_addr };
             let result = verifier.verify_groth16_proof_bn254(full_proof_with_hints.span());
@@ -1266,7 +1269,7 @@ pub mod Zylith {
                 full_proof_with_hints.append(*public_inputs.at(i));
                 i += 1;
             }
-            
+
             let lp_verifier_addr = self.lp_verifier.read();
             let verifier = ILPVerifier { contract_address: lp_verifier_addr };
             let result = verifier.verify_groth16_proof_bn254(full_proof_with_hints.span());
